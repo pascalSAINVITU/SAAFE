@@ -1,0 +1,50 @@
+[ // SAAFE, Safe Autonomous Agent Forwarding Estate
+   "autonomous agent",{ 
+	   	messages: {
+			cases: [
+				{ // 1. Store any asset;
+					if: "{trigger.data.puk AND !trigger.data.s AND not !trigger.data.ad}",
+					messages: [
+						{
+							app: "state", state: "{
+								var[trigger.data.puk||trigger.data.asset] += trigger.output[[asset=trigger.data.asset]]; 
+								response['message'] = var[trigger.data.puk]||' '||trigger.data.asset||' are safe under the puk '||trigger.data.puk;
+							}"
+						}
+					]
+				},
+				{ // 2. Order withdraw;
+					if: "{trigger.data.puk AND trigger.data.s AND not trigger.data.ad}",
+					init: "{ 
+						$asset = trigger.data.as otherwise trigger.data.asset;
+						if (!var[trigger.data.puk||$asset]) bounce ("puk doesn\'t exists with asset "||$asset);
+						if (!is_valid_sig(trigger.data.ad, "-----BEGIN PUBLIC KEY-----"||trigger.data.puk||"-----END PUBLIC KEY-----", trigger.data.s)) bounce ("Wrong signature!");
+					}",
+					messages: [
+						{ 
+							app: 'payment', payload: {
+								asset: "{trigger.data.asset}",
+								outputs: [{"address": "{trigger.data.ad}", "amount": "{var[trigger.data.puk]}" }]
+							}
+						},
+						{ 
+							app: "state", state: "{
+								var[trigger.data.puk||trigger.data.asset] = false;
+								response['message'] = trigger.data.puk ||' '||trigger.data.asset||' sent to ' || trigger.data.ad;
+							}"
+						}
+					]
+				},
+				{ // default case
+					messages: [
+						{ 
+							app: "state", state: "{
+								bounce ("Set a 'puk' field to <a public key, for which you have the related private key> to safely store funds. To withdraw later, set the same 'puk', as well as a 'ad' field to <the Obyte adresse where you want to receive the funds> and a 's' field to <the signature of a message containing the address 'a'>.");
+							}"
+						}
+					]
+				}
+			]
+		}
+	}
+]
