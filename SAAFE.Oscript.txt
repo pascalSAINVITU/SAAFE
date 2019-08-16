@@ -3,7 +3,7 @@
 	   	messages: {
 			cases: [
 				{ // 1. Store any asset;
-					if: "{trigger.data.puk AND !trigger.data.s AND not !trigger.data.ad}",
+					if: "{trigger.data.puk AND !trigger.data.s AND !trigger.data.ad}",
 					messages: [
 						{
 							app: "state", state: "{
@@ -14,7 +14,7 @@
 					]
 				},
 				{ // 2. Order withdraw;
-					if: "{trigger.data.puk AND trigger.data.s AND not trigger.data.ad}",
+					if: "{trigger.data.puk AND trigger.data.s AND trigger.data.ad}",
 					init: "{ 
 						$asset = trigger.data.as otherwise trigger.data.asset;
 						if (!var[trigger.data.puk||$asset]) bounce ("puk doesn\'t exists with asset "||$asset);
