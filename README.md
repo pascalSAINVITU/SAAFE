@@ -16,3 +16,7 @@ Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4
 Optionnaly:
 * as = <asset name >
 if the asset used to trigger the AA is not the one stored.
+  
+Initial AA adress : 
+Check in explorer: https://testnetexplorer.obyte.org/#fWsV0XKLBq4jZXjIDycprAgNfA1XqfZTTOLjXAa6guc=
+Agent address: HUIPCMM7OCHJJA64GS56VRXYPULCUIYT
