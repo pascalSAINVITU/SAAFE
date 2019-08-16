@@ -1,36 +1,41 @@
 [ // SAAFE, Safe Autonomous Agent Forwarding Estate
    "autonomous agent",{ 
+		init: "{
+			$puk = trigger.data.puk1||trigger.data.puk2;
+			$asset = trigger.data.asset otherwise trigger.output[[asset=base]].asset;
+			$asset_nice_name = ($asset == 'base')? 'bytes' : $asset;
+			$key = $puk||'_'||$asset;
+		}",
 	   	messages: {
 			cases: [
 				{ // 1. Store any asset;
-					if: "{trigger.data.puk AND !trigger.data.s AND !trigger.data.ad}",
+					if: "{(trigger.data.puk1) AND (trigger.data.puk2) AND (!trigger.data.s) AND (!trigger.data.ad)}",
 					messages: [
 						{
 							app: "state", state: "{
-								var[trigger.data.puk||trigger.data.asset] += trigger.output[[asset=trigger.data.asset]]; 
-								response['message'] = var[trigger.data.puk]||' '||trigger.data.asset||' are safe under the puk '||trigger.data.puk;
+								var[$key] += trigger.output[[asset=base]]; 
+								response['message'] = var[$key]||' '||$asset_nice_name||' are safe under the puk '||$puk;
 							}"
 						}
 					]
 				},
 				{ // 2. Order withdraw;
-					if: "{trigger.data.puk AND trigger.data.s AND trigger.data.ad}",
+					if: "{(trigger.data.puk1) AND (trigger.data.puk2) AND (trigger.data.s1) AND (trigger.data.s2) AND (trigger.data.ad)}",
 					init: "{ 
-						$asset = trigger.data.as otherwise trigger.data.asset;
-						if (!var[trigger.data.puk||$asset]) bounce ("puk doesn\'t exists with asset "||$asset);
-						if (!is_valid_sig(trigger.data.ad, "-----BEGIN PUBLIC KEY-----"||trigger.data.puk||"-----END PUBLIC KEY-----", trigger.data.s)) bounce ("Wrong signature!");
+						if (!var[$key]) bounce ("puk doesn\'t exists with asset "||$asset_nice_name);
+						if (!is_valid_sig(trigger.data.ad, "-----BEGIN PUBLIC KEY-----"||$puk||"-----END PUBLIC KEY-----", trigger.data.s1||trigger.data.s2)) bounce ("Wrong signature!");
 					}",
 					messages: [
 						{ 
 							app: 'payment', payload: {
-								asset: "{trigger.data.asset}",
-								outputs: [{"address": "{trigger.data.ad}", "amount": "{var[trigger.data.puk]}" }]
+								asset: "{$asset}",
+								outputs: [{"address": "{trigger.data.ad}", "amount": "{var[$key]}" }]
 							}
 						},
 						{ 
 							app: "state", state: "{
-								var[trigger.data.puk||trigger.data.asset] = false;
-								response['message'] = trigger.data.puk ||' '||trigger.data.asset||' sent to ' || trigger.data.ad;
+								response['message'] = var[$key]||' '||$asset_nice_name||' withdrawn from '||$puk||' to '|| trigger.data.ad;
+								var[$key] = false;
 							}"
 						}
 					]
@@ -39,7 +44,7 @@
 					messages: [
 						{ 
 							app: "state", state: "{
-								bounce ("Set a 'puk' field to <a public key, for which you have the related private key> to safely store funds. To withdraw later, set the same 'puk', as well as a 'ad' field to <the Obyte adresse where you want to receive the funds> and a 's' field to <the signature of a message containing the address 'a'>.");
+								bounce ("Set a 'puk1' and 'puk2' field to <the 2 half of the public key, for which you have the related private key> to safely store funds. To withdraw later, set the same 'puk', as well as a 'ad' field to <the Obyte adresse where you want to receive the funds> and a 's1' and 's2' field to <the 2 half signature of a message containing the address 'a'>.");
 							}"
 						}
 					]
