@@ -1,5 +1,5 @@
 # SAAFE
-## Safe Autonomous Agent Forwarding Estate
+## Safe Autonomous Agent Forwarding Estate for Obyte
 
 Inspired by the Bank with Secret of Obbie Barborico, this AA can completely safely store any assets with a very synthetic code. The assets can be as safely withdraw by anyone in possession of the private key associated to the public one used to stored the funds.
 
