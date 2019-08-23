@@ -21,6 +21,7 @@ Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4
 * puk2 = Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
 * s1 = MEQCIA3df2YnWjDVlNoq+vQlSLRDhH+ESeaIWnMUHfoC/G6L
 * s2 = AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==
+
 Optionnaly:
 * asset = <asset name >
 if the asset used to trigger the AA is not the one stored.
