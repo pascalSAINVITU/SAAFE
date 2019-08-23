@@ -1,0 +1,116 @@
+[ 
+/*
+# SAAFE UNIT TEST
+## 
+###
+* 
+*/
+   "autonomous agent",{ 
+		init: "{
+			$aa_name = ""; 
+			$aa = "EUWGKRYFJOAMFQZYVJ2AAYKEFQLGZAWC";
+
+		}",
+	   	messages: {
+			cases: [
+				{ // 1. trying to store and asset in public mode
+					if: "{ trigger.data.s }",
+					init: "{ 
+						
+					}",
+					messages: [
+						{ 
+							app: 'data', payload: {
+								puk1: "{"MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4r"}",
+								puk2: "{"Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg=="}",
+							}
+						},
+						{ 
+							app: 'payment', payload: {
+								asset: "{'base'}",
+								outputs: [{
+									address: "{$aa}", 
+									amount: "{trigger.output[[asset=base]] - 1000}" 
+								}]
+							}
+						},
+						{
+							app: "state", state: "{
+								
+							}"
+						}
+					]
+				},
+				{ // 2. trying to store and asset in private mode, should work on draw create from this AA and not from other addresses
+					if: "{ trigger.data.p }",
+					init: "{ 
+						
+					}",
+					messages: [
+						{ 
+							app: 'data', payload: {
+								puk1: "{"MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4r"}",
+								puk2: "{"Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg=="}",
+								private: "{"true"}",
+							}
+						},
+						{ 
+							app: 'payment', payload: {
+								asset: "{'base'}",
+								outputs: [{
+									address: "{$aa}", 
+									amount: "{trigger.output[[asset=base]] - 1000}" 
+								}]
+							}
+						},
+						{
+							app: "state", state: "{
+								
+							}"
+						}
+					]
+				},
+				{ // 3. trying to 
+					if: "{ trigger.data.w }",
+					init: "{ 
+						
+					}",
+					messages: [
+						{ 
+							app: 'data', payload: {
+								puk1: "{"MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4r"}",
+								puk2: "{"Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg=="}",
+								s1: "{"MEQCIA3df2YnWjDVlNoq+vQlSLRDhH+ESeaIWnMUHfoC/G6L"}",
+								s2: "{"AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q=="}",
+								ad: "{"O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ"}",
+							}
+						},
+						{ 
+							app: 'payment', payload: {
+								asset: "{'base'}",
+								outputs: [{
+									address: "{$aa}", 
+									amount: "{trigger.output[[asset=base]] - 1000}" 
+								}]
+							}
+						},
+						{
+							app: "state", state: "{
+								
+							}"
+						}
+					]
+				},
+				{ // default case
+					messages: [
+						{ 
+							app: "state", state: "{
+								bounce ("");
+							}"
+						}
+					]
+				}
+			]
+		}
+	}
+]
