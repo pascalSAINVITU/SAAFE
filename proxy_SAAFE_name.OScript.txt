@@ -7,23 +7,28 @@
 	    // doc_url: “https://github.com/pascalSAINVITU/SAAFE”,
 		init: "{
 			$aa_name = "SAAFE with name";
-			$SAAFE = "ISWXUQ3N7NWA2KA5SJJXACJNCKHWEXQY";
+			$SAAFE = "66KMVI6WESM6ECMNASQ77QM7QVOVMC5M";
 
 			$name = trigger.data.name otherwise bounce ("Please, specify 'name'.");
-			$puk = var[$name] otherwise (trigger.data.puk1 AND trigger.data.puk2)? trigger.data.puk1||trigger.data.puk2 : bounce ("Please specify existing 'name', or create a new safe with 'name', 'puk1' and 'puk2' (2 halfs of a public key for which your have the private key safely store in real world.");
+			$puk1 = var[$name||"_puk1"] otherwise trigger.data.puk1 otherwise false;
+			$puk2 = var[$name||"_puk2"] otherwise trigger.data.puk2 otherwise false;
+			$puk = ($puk1 AND $puk2)? $puk1||$puk2 : bounce ("Please specify existing 'name', or create a new safe with 'name', 'puk1' and 'puk2' (2 halfs of a public key for which your have the private key safely store in real world.");
 			$withdraw_address = trigger.data.address otherwise trigger.address; // with draw to trigger if not specified;
 		}",
 		messages: [
 			{   
+				if: "{ $puk and !(trigger.data.s1 or trigger.data.s2)}",
 				app: 'data', payload: {
-					puk1: "{ trigger.data.puk1 }",
-					puk2: "{ trigger.data.puk2 }",
-					private: "{true}", // only this AA will be able to store and withdraw
+					puk1: "{ $puk1 }",
+					puk2: "{ $puk2 }",
+					private: "{ true }", // only this AA will be able to store and withdraw
 				}
 			},
 			{ 	
 				if: "{ trigger.data.s1 AND trigger.data.s2}",
 				app: 'data', payload: {
+					puk1: "{ $puk1 }",
+					puk2: "{ $puk2 }",
 					s1: "{ trigger.data.s1 }",
 					s2: "{ trigger.data.s2 }",
 					asset: "{ trigger.data.asset }",
@@ -41,8 +46,9 @@
 			},
 			{
 				app: "state", state: "{
-					var[$name] = $puk;
-					response['message'] = var[$SAAFE]["response['message']'"];
+					var[$name||"_puk1"] = $puk1;
+					var[$name||"_puk2"] = $puk2;
+					response['message'] = var[$SAAFE]["message"];
 				}"
 			}
 		]
