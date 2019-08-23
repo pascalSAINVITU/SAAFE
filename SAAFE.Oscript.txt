@@ -1,41 +1,114 @@
-[ // SAAFE, Safe Autonomous Agent Forwarding Estate
+[ 
+/*
+SAAFE, Safe Autonomous Agent Forwarding Estate 
+
+Inspired by the Bank with Secret of Obbie Barborico, this AA can safely store any public assets in a drawer of a safe. The assets can be as safely withdraw from a drawer by anyone in possession of the private key associated to the public one used to stored the funds. Except if the drawer was set to private at its creation, in this case only the creator can withdraw the funds.
+It can be use for cold storage of any public assets.
+GitHub: https://github.com/pascalSAINVITU/SAAFE
+
+Unfortunately, public keys and signature are too long for a single field, so they have to be introduce in 2 parts, puk1, puk2, s1 and s2.
+Is is using DANAA to get assets nice names.
+
+For example, send assets to SAAFE with puk = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4rKe1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
+Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ' by sending to SAAFE the same puk, the withdrawing address as well as the signature of the message containing the withdrawing address:
+puk1 = 
+MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4r
+puk2 = 
+Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
+ad = O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ
+s1 = 
+MEQCIA3df2YnWjDVlNoq+vQlSLRDhH+ESeaIWnMUHfoC/G6L
+s2=
+AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==
+
+## States description:
+### storage drawers
+* drawer_<hash> = store the balance for a given puk and asset, <hash> is the sha256 of puk and asset;
+* last_s_<puk> = store the last signature (part1) used with the puk, to avoid Harry to replay the withdraw; 
+
+*/
    "autonomous agent",{ 
+		bounce_fees: { base: 11000, },
 		init: "{
-			$puk = trigger.data.puk1||trigger.data.puk2;
-			$asset = trigger.data.asset otherwise trigger.output[[asset=base]].asset;
-			$asset_nice_name = ($asset == 'base')? 'bytes' : $asset;
-			$key = $puk||'_'||$asset;
+			$aa_name = "SAAFE"; // Safe Autonomous Agent Forwarding Estate;
+			$aa_owner = "O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ"; // could withdraw the dust is calculable;
+			$danaa = "M2GL3REJ3TJPHVC4GMCBKQI54NEKRYNH"; // Dynamic Asset Name AA;
+
+			// Reconstitute the public key by concataining the 2 given parts
+			$puk = (trigger.data.puk1 AND trigger.data.puk2)? trigger.data.puk1||trigger.data.puk2 : false;
+			
+			// Reconstitute the signature by concataining the 2 given parts
+			$signature = (trigger.data.s1 AND trigger.data.s2)? trigger.data.s1||trigger.data.s2 : false;
+			
+			// Asset detection
+			$received_unbase_asset = trigger.output[[asset!=base]].asset;
+			$received_asset = ($received_unbase_asset != "none")? $received_unbase_asset : "base";
+			$asset = trigger.data.asset otherwise $received_asset;
+			$asset_nice_name = var[$danaa][$asset] otherwise $asset;
+
+			// Drawer ID
+			$drawer = sha256($puk||'_'||$asset); // to reduce size of the state var.
+
+			// short names for state var.
+			$dr= "drawer_"||$drawer;
+			$am = $dr||"_amount";
+			$as = $dr||"_asset";
+			$pu = $dr||"_private_user";
+			$ls = "last_s_"||sha256($puk); // last signature used;
 		}",
 	   	messages: {
 			cases: [
-				{ // 1. Store any asset;
-					if: "{(trigger.data.puk1) AND (trigger.data.puk2) AND (!trigger.data.s) AND (!trigger.data.ad)}",
+				{ // 1. Store any asset / creating a drawer;
+					if: "{ $puk AND !($signature or trigger.data.ad) }",
 					messages: [
 						{
 							app: "state", state: "{
-								var[$key] += trigger.output[[asset=base]]; 
-								response['message'] = var[$key]||' '||$asset_nice_name||' are safe under the puk '||$puk;
+								if (!var[$as] and trigger.data.private) // only at the creation, to avoid abuses
+									var[$pu] = trigger.address;
+								var[$am] += trigger.output[[asset=$asset]].amount; 
+								var[$as] = $asset; 
+								response['message'] = var[$am]||' '||$asset_nice_name||' are safe under the puk '||$puk;
 							}"
 						}
 					]
 				},
 				{ // 2. Order withdraw;
-					if: "{(trigger.data.puk1) AND (trigger.data.puk2) AND (trigger.data.s1) AND (trigger.data.s2) AND (trigger.data.ad)}",
+					if: "{ $puk AND $signature AND trigger.data.ad }",
 					init: "{ 
-						if (!var[$key]) bounce ("puk doesn\'t exists with asset "||$asset_nice_name);
-						if (!is_valid_sig(trigger.data.ad, "-----BEGIN PUBLIC KEY-----"||$puk||"-----END PUBLIC KEY-----", trigger.data.s1||trigger.data.s2)) bounce ("Wrong signature!");
+						// checking
+						if (var[$pu]) 
+							if (var[$pu] != trigger.address) 
+								bounce ("Not allowed to withdraw from this private drawer!");
+
+						if (!var[$as]) bounce ("puk doesn\'t exists with asset!"||$asset_nice_name);
+						
+						if (var[$ls])
+							if (var[$ls] == sha256($signature)) 
+								bounce ("Cannot use 2 times the same signature in a row!");
+
+						if (!is_valid_sig(trigger.data.ad, "-----BEGIN PUBLIC KEY-----"||$puk||"-----END PUBLIC KEY-----", $signature)) bounce ("Wrong signature!");
+
+						// balances
+						$old_balance = var[$am];
+						$amount = trigger.data.am otherwise $old_balance;
 					}",
 					messages: [
 						{ 
 							app: 'payment', payload: {
 								asset: "{$asset}",
-								outputs: [{"address": "{trigger.data.ad}", "amount": "{var[$key]}" }]
+								outputs: [{"address": "{trigger.data.ad}", "amount": "{$amount}" }]
 							}
 						},
 						{ 
 							app: "state", state: "{
-								response['message'] = var[$key]||' '||$asset_nice_name||' withdrawn from '||$puk||' to '|| trigger.data.ad;
-								var[$key] = false;
+								$new_balance = $old_balance - $amount - 1000;
+								response['message'] = $amount||' of the '||$old_balance||' '||$asset_nice_name||' withdrawn from '||$puk||' to '|| trigger.data.ad;
+								if ($new_balance < 1000) // cleaning
+								{
+									var[$am] = false;	var[$as] = false;	var[$pu] = false;
+								}
+								else // storing last sign to avoid abuse
+									var[$ls] = sha256($signature); //to reduce size
 							}"
 						}
 					]
@@ -44,7 +117,7 @@
 					messages: [
 						{ 
 							app: "state", state: "{
-								bounce ("Set a 'puk1' and 'puk2' field to <the 2 half of the public key, for which you have the related private key> to safely store funds. To withdraw later, set the same 'puk', as well as a 'ad' field to <the Obyte adresse where you want to receive the funds> and a 's1' and 's2' field to <the 2 half signature of a message containing the address 'a'>.");
+								bounce ("To safely store an asset, send it with a 'puk1' and 'puk2' field set to <the 2 half of the public key, for which you have the related private key>. To withdraw, set the same puks fields, as well as a 'ad' field set to <the Obyte adresse where you want to receive the funds> and a 's1' and 's2' field set to <the 2 half signature of a message containing the address 'ad'>.");
 							}"
 						}
 					]
