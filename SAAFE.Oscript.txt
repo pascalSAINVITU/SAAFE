@@ -117,7 +117,10 @@ AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==
 					messages: [
 						{ 
 							app: "state", state: "{
-								bounce ("To safely store an asset, send it with a 'puk1' and 'puk2' field set to <the 2 half of the public key, for which you have the related private key>. To withdraw, set the same puks fields, as well as a 'ad' field set to <the Obyte adresse where you want to receive the funds> and a 's1' and 's2' field set to <the 2 half signature of a message containing the address 'ad'>.");
+								if(!($puk))
+									bounce ("To store or withdraw, you always have to set at least 'puk1' and 'puk2' to <the 2 half of the public key, for which you have the related private key>");
+								if(!($signature))
+									bounce ("To withdraw, set the puks fields, as well as an 'ad' field set to <the Obyte adresse where you want to receive the funds> and a 's1' and 's2' field set to <the 2 half signature of a message containing the address 'ad'>.");
 							}"
 						}
 					]
