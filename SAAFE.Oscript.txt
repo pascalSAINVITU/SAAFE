@@ -85,8 +85,10 @@ AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==
 						if (var[$ls])
 							if (var[$ls] == sha256($signature)) 
 								bounce ("Cannot use 2 times the same signature in a row!");
-
-						if (!is_valid_sig(trigger.data.ad, "-----BEGIN PUBLIC KEY-----"||$puk||"-----END PUBLIC KEY-----", $signature)) bounce ("Wrong signature!");
+						
+						$formated_puk = "-----BEGIN PUBLIC KEY-----"||$puk||"-----END PUBLIC KEY-----";
+						if (!is_valid_sig(trigger.data.ad, $formated_puk, $signature)) 
+							bounce ("The 'withdraw address' signed is not the same as the one that was asked to use ! or this signature was not created with private key linked to "||$puk||" !");
 
 						// balances
 						$old_balance = var[$am];
@@ -101,7 +103,7 @@ AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==
 						},
 						{ 
 							app: "state", state: "{
-								$new_balance = $old_balance - $amount - 1000;
+								$new_balance = $old_balance - $amount - 999;
 								response['message'] = $amount||' of the '||$old_balance||' '||$asset_nice_name||' withdrawn from '||$puk||' to '|| trigger.data.ad;
 								if ($new_balance < 1000) // cleaning
 								{
@@ -118,9 +120,9 @@ AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==
 						{ 
 							app: "state", state: "{
 								if(!($puk))
-									bounce ("To store or withdraw, you always have to set at least 'puk1' and 'puk2' to <the 2 half of the public key, for which you have the related private key>");
+									bounce ("To store or withdraw, you always have to set at least 'puk1' and 'puk2' to the 2 half of the public key, for which you have the related private key");
 								if(!($signature))
-									bounce ("To withdraw, set the puks fields, as well as an 'ad' field set to <the Obyte adresse where you want to receive the funds> and a 's1' and 's2' field set to <the 2 half signature of a message containing the address 'ad'>.");
+									bounce ("To withdraw, set the puks fields, as well as an 'ad' field set to the Obyte adresse where you want to receive the funds and a 's1' and 's2' field set to <the 2 half signature of a message containing the address 'ad'>.");
 							}"
 						}
 					]
