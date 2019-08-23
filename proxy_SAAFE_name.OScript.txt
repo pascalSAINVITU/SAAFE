@@ -1,1 +1,50 @@
+[ 
+/*
+# Proxy to use SAAFE with name instead puk1 puk2;
+*/
+   "autonomous agent",{ 
+		bounce_fees: {base: 10000},
+	    // doc_url: “https://github.com/pascalSAINVITU/SAAFE”,
+		init: "{
+			$aa_name = "SAAFE with name";
+			$SAAFE = "ISWXUQ3N7NWA2KA5SJJXACJNCKHWEXQY";
 
+			$name = trigger.data.name otherwise bounce ("Please, specify 'name'.");
+			$puk = var[$name] otherwise (trigger.data.puk1 AND trigger.data.puk2)? trigger.data.puk1||trigger.data.puk2 : bounce ("Please specify existing 'name', or create a new safe with 'name', 'puk1' and 'puk2' (2 halfs of a public key for which your have the private key safely store in real world.");
+			$withdraw_address = trigger.data.address otherwise trigger.address; // with draw to trigger if not specified;
+		}",
+		messages: [
+			{   
+				app: 'data', payload: {
+					puk1: "{ trigger.data.puk1 }",
+					puk2: "{ trigger.data.puk2 }",
+					private: "{true}", // only this AA will be able to store and withdraw
+				}
+			},
+			{ 	
+				if: "{ trigger.data.s1 AND trigger.data.s2}",
+				app: 'data', payload: {
+					s1: "{ trigger.data.s1 }",
+					s2: "{ trigger.data.s2 }",
+					asset: "{ trigger.data.asset }",
+					ad: "{ $withdraw_address }",
+				}
+			},
+			{ 
+				app: 'payment', payload: {
+					asset: "{'base'}",
+					outputs: [{
+						address: "{$SAAFE}", 
+						amount: "{trigger.output[[asset=base]] - 1000}" 
+					}]
+				}
+			},
+			{
+				app: "state", state: "{
+					var[$name] = $puk;
+					response['message'] = var[$SAAFE]["response['message']'"];
+				}"
+			}
+		]
+	}
+]
