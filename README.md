@@ -29,7 +29,8 @@ You have to provide the following data:
    * 'puk2' = PW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==			// the second part
    * 's1' = MEQCIE36nzWEmsuWbhtSqQnwM3npU0AfpNm9QBSThz1x4jP3 							// first part of the 'safe' signature
    * 's2' = AiBbYaMG/4yRJEu7OcKSXur1vvFGZSEjCVijYuOCWjv/xg==							// second part of the 'safe' signature
-Optionnally set the drawer to private so that only the creator can trigger a withdraw.
+
+Optionnally set the drawer to private so that only the creator can trigger a withdraw:
    * 'private' = true
 
 ### To withdraw to 35IT3ZYKEPQSCXG2F7A7KWNRAD3SZXN4 you need to sign a message containing this address:
