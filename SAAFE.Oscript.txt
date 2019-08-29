@@ -30,11 +30,13 @@ Withdraw the funds by signing a message containing the withdraw address with you
 * 'puk1' = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4r	
 * 'puk2' = Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
 * 's1' = MEQCIA3df2YnWjDVlNoq+vQlSLRDhH+ESeaIWnMUHfoC/G6L			// half signature
-* 's2' = AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==			// other signature
+* 's2' = AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==			// other half
 * 'ad' = O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ							// Withdraw address in the message signed
 Optionnaly:
-* asset = <asset name >
+* asset = < asset name >
 if the asset used to trigger the AA is not the one stored.
+* am = <amount>
+if you don't want to empty the full balance
 
 ## Use cases
 It can be use for cold storage of any public assets.
@@ -53,7 +55,7 @@ Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4
 		init: `{
 			$aa_name = "SAAFE"; // Safe Autonomous Agent Forwarding Estate;
 			$aa_owner = "O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ"; // could withdraw the dust is calculable;
-			$danaa = "M2GL3REJ3TJPHVC4GMCBKQI54NEKRYNH"; // Dynamic Asset Name AA;
+			$danaa = "LLAVLVFN3CPBHTAB62NOIZLAMPABR2YF"; // Dynamic Asset Name AA;
 
 			// Reconstitute the public key by concataining the 2 given parts
 			$puk = (trigger.data.puk1 AND trigger.data.puk2)? trigger.data.puk1||trigger.data.puk2 : false;
@@ -65,7 +67,7 @@ Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4
 			$received_unbase_asset = trigger.output[[asset!=base]].asset;
 			$received_asset = ($received_unbase_asset != "none")? $received_unbase_asset : "base";
 			$asset = trigger.data.asset otherwise $received_asset;
-			$asset_nice_name = var[$danaa][$asset] otherwise $asset;
+			$asset_nice_name = var[$danaa][$asset||"_shortName"] otherwise $asset;
 
 			// Drawer ID
 			$drawer = sha256($puk||"_"||$asset); // to reduce size of the state var.
