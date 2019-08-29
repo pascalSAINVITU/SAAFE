@@ -25,4 +25,6 @@ Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4
 Optionnaly:
 * asset = <asset name >
 if the asset used to trigger the AA is not the one stored.
+* am = <amount>
+if you don't want to empty the full balance
 
