@@ -23,8 +23,8 @@ GitHub: https://github.com/pascalSAINVITU/SAAFE
 * private key = MHQCAQEEICZ3gsnwe0cK5pxrjWYC+yry+iAIDpXIdbx6MygiBwMooAcGBSuBBAAKoUQDQgAE8H5XU2SEpdbIhPUwP2EPdWkkBeqHfxlPW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==
 
 ### To store funds, you need to sign the message 'safe':
-* signature = MEQCIE36nzWEmsuWbhtSqQnwM3npU0AfpNm9QBSThz1x4jP3AiBbYaMG/4yRJEu7OcKSXur1vvFGZSEjCVijYuOCWjv/xg==
-And to provide the following data:
+'safe' signature = MEQCIE36nzWEmsuWbhtSqQnwM3npU0AfpNm9QBSThz1x4jP3AiBbYaMG/4yRJEu7OcKSXur1vvFGZSEjCVijYuOCWjv/xg==
+You have to provide the following data:
 * 'puk1' = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE8H5XU2SEpdbIhPUwP2EPdWkkBeqHfxl      // a first part of the publi key
 * 'puk2' = PW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==			// the second part
 * 's1' = MEQCIE36nzWEmsuWbhtSqQnwM3npU0AfpNm9QBSThz1x4jP3 							// first part of the 'safe' signature
@@ -33,8 +33,8 @@ Optionnally set the drawer to private so that only the creator can trigger a wit
 * 'private' = true
 
 ### To withdraw to 35IT3ZYKEPQSCXG2F7A7KWNRAD3SZXN4 you need to sign a message containing this address:
-* signature = MEUCIQDm3WwTiryA24f+dlXvMhNYhg6yJWhqw/nx1mcIxQuzpwIgf1wuhehvt5+f4z2oPapZHxOo+F5txkqYCA20ujpklYY=
-And to provide the following data:
+'35IT3ZYKEPQSCXG2F7A7KWNRAD3SZXN4' signature = MEUCIQDm3WwTiryA24f+dlXvMhNYhg6yJWhqw/nx1mcIxQuzpwIgf1wuhehvt5+f4z2oPapZHxOo+F5txkqYCA20ujpklYY=
+You have to provide the following data:
 * 'puk1' = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE8H5XU2SEpdbIhPUwP2EPdWkkBeqHfxl      // a first part of the publi key
 * 'puk2' = PW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==			// the second part
 * 's1' = MEUCIQDm3WwTiryA24f+dlXvMhNYhg6yJWhqw/nx1mcIxQuzpwIgf1 			// first part of the '<withdraw_address>' signature
