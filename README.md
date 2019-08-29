@@ -23,6 +23,8 @@ GitHub: https://github.com/pascalSAINVITU/SAAFE
 * public key = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE8H5XU2SEpdbIhPUwP2EPdWkkBeqHfxlPW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==
 * private key = MHQCAQEEICZ3gsnwe0cK5pxrjWYC+yry+iAIDpXIdbx6MygiBwMooAcGBSuBBAAKoUQDQgAE8H5XU2SEpdbIhPUwP2EPdWkkBeqHfxlPW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==
 
+You can create some public/private key pairs to play with here: https://8gwifi.org/ecsignverify.jsp
+
 ### To store funds, you need to sign the message 'safe':
 'safe' signature = MEQCIE36nzWEmsuWbhtSqQnwM3npU0AfpNm9QBSThz1x4jP3AiBbYaMG/4yRJEu7OcKSXur1vvFGZSEjCVijYuOCWjv/xg==
 
