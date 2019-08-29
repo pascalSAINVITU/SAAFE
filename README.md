@@ -14,6 +14,7 @@ GitHub: https://github.com/pascalSAINVITU/SAAFE
 ## Additionnal features
 * For safety reasons to validate the storage, the signature of a message composed of the word 'safe' must be provided to ensure that the key pair created is supported and avoid the funds to be stucked forever in the AA.
 * If the drawer was set to private at its creation, only the creator can withdraw the funds. This option allows a drawer to be managed exclusively from an another AA.
+* For replay protection, the withdraw signature cannot be used 2 times in a row.
 * SAAFE is using DANAA (Dynamic Asset Names AA) to get registered assets short names.
 
 ## Example of workflow:
@@ -24,6 +25,7 @@ GitHub: https://github.com/pascalSAINVITU/SAAFE
 
 ### To store funds, you need to sign the message 'safe':
 'safe' signature = MEQCIE36nzWEmsuWbhtSqQnwM3npU0AfpNm9QBSThz1x4jP3AiBbYaMG/4yRJEu7OcKSXur1vvFGZSEjCVijYuOCWjv/xg==
+
 You have to provide the following data:
    * 'puk1' = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE8H5XU2SEpdbIhPUwP2EPdWkkBeqHfxl      // a first part of the publi key
    * 'puk2' = PW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==			// the second part
@@ -35,6 +37,7 @@ Optionnally set the drawer to private so that only the creator can trigger a wit
 
 ### To withdraw to 35IT3ZYKEPQSCXG2F7A7KWNRAD3SZXN4 you need to sign a message containing this address:
 '35IT3ZYKEPQSCXG2F7A7KWNRAD3SZXN4' signature = MEUCIQDm3WwTiryA24f+dlXvMhNYhg6yJWhqw/nx1mcIxQuzpwIgf1wuhehvt5+f4z2oPapZHxOo+F5txkqYCA20ujpklYY=
+
 You have to provide the following data:
    * 'puk1' = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE8H5XU2SEpdbIhPUwP2EPdWkkBeqHfxl      // a first part of the publi key
    * 'puk2' = PW0GdTwBAMY2mMs/Hxz8T/ns79o9inWJ1F3VW5qn2UMtB74x4isZqOw==			// the second part
