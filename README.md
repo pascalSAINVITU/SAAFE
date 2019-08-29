@@ -9,10 +9,10 @@ GitHub: https://github.com/pascalSAINVITU/SAAFE
 * It can be use for cold storage of any public assets.
 
 ## Flaw
-* Unfortunately, public keys and signature are too long for a single field, so they have to be introduce in 2 parts, puk1, puk2, (puk 3, puk 4), s1 and s2 (s3, s4).
+* Unfortunately, public keys and signatures are too long for a single field, so they have to be introduce in several parts, puk1, puk2, (puk 3, puk 4), s1 and s2 (s3, s4).
 
 ## Additionnal features
-* For safety reasons to validate the storage, the signature of a message composed of the word 'safe' must be provided to insure that the key pair created is supported and avoid the funds to be stuck for good in the AA.
+* For safety reasons to validate the storage, the signature of a message composed of the word 'safe' must be provided to ensure that the key pair created is supported and avoid the funds to be stucked forever in the AA.
 * If the drawer was set to private at its creation, only the creator can withdraw the funds. This option allows a drawer to be managed exclusively from an another AA.
 * SAAFE is using DANAA (Dynamic Asset Names AA) to get registered assets short names.
 
