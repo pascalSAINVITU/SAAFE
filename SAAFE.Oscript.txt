@@ -1,157 +1,132 @@
-[ 
+[
    "autonomous agent",
-/*
-# SAAFE
-## Safe Autonomous Agent Forwarding Estate powered by Obyte
+   {
+      bounce_fees: {
+         base: 10000
+      },
+      init: "{
+         $aa_name = "SAAFE"; // Safe Autonomous Agent Forwarding Estate;
+         $aa_owner = "O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ"; // could withdraw the dust is calculable;
+         $danaa = "LLAVLVFN3CPBHTAB62NOIZLAMPABR2YF"; // Dynamic Asset Name AA;
 
-Inspired by the Bank with Secret of Obbie Barborico, this AA can safely store any public assets in a drawer of a safe. The assets can be as safely withdraw from a drawer by anyone in possession of the private key associated to the public one used to stored the funds. The withdrawer need to sign a message containing the wanted withdraw address. 
-If the drawer was set to private at its creation, only the creator can withdraw the funds.
+         // Reconstitute the public key by concataining the 2 given parts
+         $puk_part1 = trigger.data.puk1 otherwise "";
+         $puk_part2 = trigger.data.puk2 otherwise "";
+         $puk_part3 = trigger.data.puk3 otherwise "";
+         $puk_part4 = trigger.data.puk4 otherwise "";
+         $puk = $puk_part1 || $puk_part2|| $puk_part3|| $puk_part4;
+         $puk_received = ($puk != "");
+         
+         // Reconstitute the signature by concataining the 2 given parts
+         $s_part1 = trigger.data.s1 otherwise "";
+         $s_part2 = trigger.data.s2 otherwise "";
+         $s_part3 = trigger.data.s3 otherwise "";
+         $s_part4 = trigger.data.s4 otherwise "";
+         $signature = $s_part1 || $s_part2|| $s_part3 || $s_part4;
+         $signature_received = $signature != "";
+         
+         // Asset detection
+         $received_unbase_asset = trigger.output[[asset!=base]].asset;
+         $received_asset = ($received_unbase_asset != "none")? $received_unbase_asset : "base";
+         $asset = trigger.data.asset otherwise $received_asset;
+         $asset_nice_name = var[$danaa][$asset||"_shortName"] otherwise $asset;
 
-GitHub: https://github.com/pascalSAINVITU/SAAFE
+         // Drawer ID
+         $drawer = sha256($puk||"_"||$asset); // to reduce size of the state var.
 
-## Flaw
-Unfortunately, public keys and signature are too long for a single field, so they have to be introduce in 2 parts, puk1, puk2, s1 and s2.
+         // short names for state var.
+         $dr = "drawer_"||$drawer; 
+         $am = $dr||"_amount";
+         $as = $dr||"_asset";
+         $pu = $dr||"_private_user";
+         $ls = "last_s_"||sha256($puk); // last signature used;
+      }",
+      messages: {
+         cases: [
+            {
+               if: "{$puk_received and $signature_received and !trigger.data.withdraw_address}",
+               init: "{ 
+                  // check if the public key selected is in a format accepted to avoid the coin to be stucked 
+                  if (!is_valid_sig("safe", $puk, $signature)) 
+                     bounce ("The fund cannot be safely store because the signature entered is note recognise as sign message containing the word 'safe' please check the documation !");
+               }",
+               messages: [
+                  {
+                     app: "state",
+                     state: "{
+                        if (!var[$as] and trigger.data.private) // only at the creation, to avoid abuses
+                           var[$pu] = trigger.address;
+                        var[$am] += trigger.output[[asset=$asset]].amount; 
+                        var[$as] = $asset; 
+                        response['message'] = var[$am]||' '||$asset_nice_name||' are safe under the puk '||$puk;
+                     }"
+                  }
+               ]
+            },
+            {
+               if: "{ $puk_received and $signature_received and trigger.data.withdraw_address }",
+               init: "{ 
+                  // checking
+                  if (var[$pu]) 
+                     if (var[$pu] != trigger.address) 
+                        bounce ("Not allowed to withdraw from this private drawer!");
 
-## In addition
-SAAFE is using DANAA (Dynamic Asset Names AA) to get assets short names.
+                  if (!var[$as]) bounce ("puk doesn\'t exists with asset!"||$asset_nice_name);
+                  
+                  if (var[$ls])
+                     if (var[$ls] == sha256($signature)) 
+                        bounce ("Cannot use 2 times the same signature in a row!");
+                  
+                  if (!is_valid_sig(trigger.data.withdraw_address, $puk, $signature)) 
+                     bounce ("The 'withdraw address' signed is not the same as the one that was asked to use ! or this signature was not created with private key linked to "||$puk||" !");
 
-## Use cases:
-### It can be use for cold storage of any public assets.
-For example, send assets to SAAFE with puk = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4rKe1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
-Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ' by sending to SAAFE the same puk, the withdrawing address as well as the signature of the message containing the withdrawing address:
-
-Store you public asset by sending funds to SAAFE by sending your public key in 2 parts smaller than
-* 'puk1' = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4r
-* 'puk2' = Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
-Optionnally set the drawer to private so that only the creator can withdraw it. this is meant to be exclusively used by other AA
-* 'private' = true
-
-Withdraw the funds by signing a message containing the withdraw address with your private key:
-* 'puk1' = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4r	
-* 'puk2' = Ke1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
-* 's1' = MEQCIA3df2YnWjDVlNoq+vQlSLRDhH+ESeaIWnMUHfoC/G6L			// half signature
-* 's2' = AiAA+FUe6DaLG8h0ilGagyq2zb+z71ZWUx3fpikeq+DU2Q==			// other half
-* 'ad' = O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ							// Withdraw address in the message signed
-Optionnaly:
-* asset = < asset name >
-if the asset used to trigger the AA is not the one stored.
-* am = <amount>
-if you don't want to empty the full balance
-
-## Use cases
-It can be use for cold storage of any public assets.
-
-For example, send assets to SAAFE with puk = MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE90U9sMxra8wxIaIBy87p09aM8n4rKe1eZOtL0Im19ItIIzT3AiKE0dRsHemcn5bUcSqnC/jC+3H8vaCtjn9ylg==
-Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ' by sending to SAAFE the same puk, the withdrawing address as well as the signature of the message containing the withdrawing address:
-
-## States description:
-### storage drawers
-* drawer_<hash> = store the balance for a given puk and asset, <hash> is the sha256 of puk and asset;
-* last_s_<puk> = store the last signature (part1) used with the puk, to avoid Harry to replay the withdraw; 
-
-*/
-	{ 
-		bounce_fees: { base: 10000, },
-		init: `{
-			$aa_name = "SAAFE"; // Safe Autonomous Agent Forwarding Estate;
-			$aa_owner = "O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ"; // could withdraw the dust is calculable;
-			$danaa = "LLAVLVFN3CPBHTAB62NOIZLAMPABR2YF"; // Dynamic Asset Name AA;
-
-			// Reconstitute the public key by concataining the 2 given parts
-			$puk = (trigger.data.puk1 AND trigger.data.puk2)? trigger.data.puk1||trigger.data.puk2 : false;
-			
-			// Reconstitute the signature by concataining the 2 given parts
-			$signature = (trigger.data.s1 AND trigger.data.s2)? trigger.data.s1||trigger.data.s2 : false;
-			
-			// Asset detection
-			$received_unbase_asset = trigger.output[[asset!=base]].asset;
-			$received_asset = ($received_unbase_asset != "none")? $received_unbase_asset : "base";
-			$asset = trigger.data.asset otherwise $received_asset;
-			$asset_nice_name = var[$danaa][$asset||"_shortName"] otherwise $asset;
-
-			// Drawer ID
-			$drawer = sha256($puk||"_"||$asset); // to reduce size of the state var.
-
-			// short names for state var.
-			$dr = "drawer_"||$drawer; 
-			$am = $dr||"_amount";
-			$as = $dr||"_asset";
-			$pu = $dr||"_private_user";
-			$ls = "last_s_"||sha256($puk); // last signature used;
-		}`,
-	   	messages: {
-			cases:
-			[
-				{ // 1. Store any asset / creating a drawer;
-					if: `{ $puk AND !($signature or trigger.data.ad) }`,
-					messages: [
-						{
-							app: "state", state: `{
-								if (!var[$as] and trigger.data.private) // only at the creation, to avoid abuses
-									var[$pu] = trigger.address;
-								var[$am] += trigger.output[[asset=$asset]].amount; 
-								var[$as] = $asset; 
-								response['message'] = var[$am]||' '||$asset_nice_name||' are safe under the puk '||$puk;
-							}`
-						}
-					]
-				},
-				{ // 2. Order withdraw;
-					if: "{ $puk AND $signature AND trigger.data.ad }",
-					init: "{ 
-						// checking
-						if (var[$pu]) 
-							if (var[$pu] != trigger.address) 
-								bounce ("Not allowed to withdraw from this private drawer!");
-
-						if (!var[$as]) bounce ("puk doesn\'t exists with asset!"||$asset_nice_name);
-						
-						if (var[$ls])
-							if (var[$ls] == sha256($signature)) 
-								bounce ("Cannot use 2 times the same signature in a row!");
-						
-						$formated_puk = "-----BEGIN PUBLIC KEY-----"||$puk||"-----END PUBLIC KEY-----";
-						if (!is_valid_sig(trigger.data.ad, $formated_puk, $signature)) 
-							bounce ("The 'withdraw address' signed is not the same as the one that was asked to use ! or this signature was not created with private key linked to "||$puk||" !");
-
-						// balances
-						$old_balance = var[$am];
-						$amount = trigger.data.am otherwise $old_balance;
-					}",
-					messages: [
-						{ 
-							app: 'payment', payload: {
-								asset: "{$asset}",
-								outputs: [{"address": "{trigger.data.ad}", "amount": "{$amount}" }]
-							}
-						},
-						{ 
-							app: "state", state: "{
-								$new_balance = $old_balance - $amount - 999;
-								response['message'] = $amount||' of the '||$old_balance||' '||$asset_nice_name||' withdrawn from '||$puk||' to '|| trigger.data.ad;
-								if ($new_balance < 1000) // cleaning
-								{
-									var[$am] = false;	var[$as] = false;	var[$pu] = false;
-								}
-								else // storing last sign to avoid abuse
-									var[$ls] = sha256($signature); //to reduce size
-							}"
-						}
-					]
-				},
-				{ // default case
-					messages: [
-						{ 
-							app: "state", state: "{
-								if(!($puk))
-									bounce ("To store or withdraw, you always have to set at least 'puk1' and 'puk2' to the 2 half of the public key, for which you have the related private key");
-								if(!($signature))
-									bounce ("To withdraw, set the puks fields, as well as an 'ad' field set to the Obyte adresse where you want to receive the funds and a 's1' and 's2' field set to <the 2 half signature of a message containing the address 'ad'>.");
-							}"
-						}
-					]
-				}
-			]
-		}
-	}
+                  // balances
+                  $old_balance = var[$am];
+                  $amount = trigger.data.withdraw_amount otherwise $old_balance;
+               }",
+               messages: [
+                  {
+                     app: "payment",
+                     payload: {
+                        asset: "{$asset}",
+                        outputs: [
+                           {
+                              address: "{trigger.data.withdraw_address}",
+                              amount: "{$amount}"
+                           }
+                        ]
+                     }
+                  },
+                  {
+                     app: "state",
+                     state: "{
+                        $new_balance = $old_balance - $amount;
+                        var[$am] = $new_balance;
+                        response['message'] = $amount||' of the '||$old_balance||' '||$asset_nice_name||' withdrawn from '||$puk||' to '|| trigger.data.withdraw_address;
+                        if ($new_balance == 0) // cleaning
+                        {
+                           var[$am] = false;   var[$as] = false;   var[$pu] = false;
+                        }
+                        else // storing last sign to avoid abuse
+                           var[$ls] = sha256($signature); //to reduce size
+                     }"
+                  }
+               ]
+            },
+            {
+               messages: [
+                  {
+                     app: "state",
+                     state: "{
+                        if(!($puk))
+                           bounce ("To store or withdraw, you always have to set at least 'puk1' and 'puk2' to the 2 half of the public key, for which you have the related private key");
+                        if(!($signature))
+                           bounce ("To withdraw, set the puks fields, as well as an 'ad' field set to the Obyte adresse where you want to receive the funds and a 's1' and 's2' field set to .");
+                     }"
+                  }
+               ]
+            }
+         ]
+      }
+   }
 ]
