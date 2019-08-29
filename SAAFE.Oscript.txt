@@ -49,7 +49,7 @@ Then from an other address, order the withdraw to the adress 'O7NYCFUL5XIJTYE3O4
 
 */
 	{ 
-		bounce_fees: { base: 11000, },
+		bounce_fees: { base: 10000, },
 		init: `{
 			$aa_name = "SAAFE"; // Safe Autonomous Agent Forwarding Estate;
 			$aa_owner = "O7NYCFUL5XIJTYE3O4MKGMGMTN6ATQAJ"; // could withdraw the dust is calculable;
