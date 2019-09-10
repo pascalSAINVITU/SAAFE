@@ -1,9 +1,6 @@
 # SAAFE
 ## Safe Autonomous Agent Forwarding Estate powered by Obyte
-
-Inspired by the Bank with Secret of Obbie Barborico, this AA can safely store any public assets in a drawer of a safe. The assets can be as safely withdrawn from a drawer by anyone in possession of the private key associated to the public one used to stored the funds. The withdrawer needs to sign a message containing the wanted withdraw address. 
-
-GitHub: https://github.com/pascalSAINVITU/SAAFE
+This AA can safely store any public assets in a drawer of a safe. The assets can be as safely withdrawn from a drawer by anyone in possession of the private key associated to the public one used to stored the funds. The withdrawer needs to sign a message containing the wanted withdraw address. 
 
 ## Use cases:
 * It can be use for cold storage of any public assets.
