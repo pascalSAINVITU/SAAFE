@@ -1,0 +1,130 @@
+{
+/*
+Check in explorer: https://testnetexplorer.obyte.org/#dTieHsJXMcbDYdFkhkHXdnMRIgtRfBWwuVutIiL/J+A=
+Agent address: KXPXSL5JRNJCJGUBVNLXVV237DNGAF6U
+
+Check in explorer: https://testnetexplorer.obyte.org/#FuMnGX44ybi2uPn9+2m5a7xe7GjOLNxvBegZ5/adKBc=
+Agent address: 73FGQTHONHLESCV5Y3OLSY4ZXFMXGRVP
+
+*/
+		bounce_fees: { base: 10000 },
+		init: "{
+            // $AA_NAME = "SAAFE"; // Safe Autonomous Agent Forwarding Estate;
+            $INSTRUCTIONS = "You need a public/private key pair. You can use the same key for different assets. The public key should always be provided as many part as needed ('public_key_part1=<part>',...). To store asset, you have to send the funds with the clear message 'store' ('message = store') and the corresponding signature in many parts as needed 'signature_part1=<part1>, ...). To withdraw, provide 'message = <withdraw address>', the associated signature and the nature of the asset if not bytes ('asset=<asset id>').";
+
+            // Reconstitute the public key by concataining the given parts
+                $public_key = trigger.data.public_key1 otherwise bounce ("Need public key parts!") || trigger.data.public_key2 otherwise "" || trigger.data.public_key3 otherwise "" || trigger.data.public_key4 otherwise "";
+
+            // Message signed, must be "store" or <withdraw address>
+                $message = trigger.data.message otherwise bounce ("Need the 'message=store or withdraw address'!");
+
+            // Reconstitute the signature by concataining the given parts
+                $signature = trigger.data.signature_part1 otherwise bounce ("Need signature parts!") || trigger.data.signature_part2 otherwise "" || trigger.data.signature_part3 otherwise "" ||trigger.data.signature_part4 otherwise "";
+            
+            // Asset detection
+                $received_none_base_asset = trigger.output[[asset!=base]].asset;
+                $received_asset = ($received_none_base_asset != "none")? $received_none_base_asset : "base";
+                $asset = trigger.data.asset otherwise $received_asset;
+                $received_amount = trigger.output[[asset=$asset]].amount;
+
+            // Drawer id and state variable names
+                $public_key_hash = sha256($public_key);
+                $signature_hash = sha256($signature);
+                $drawer_key = "drawer_"||sha256($public_key_hash||$asset); // to reduce size
+                $drawer_owner_key = $drawer_key||"_owner";
+                $drawer_amount_key = $drawer_key||"_amount";
+                $drawer_asset_key = $drawer_key||"_asset";
+                $last_signature_key = "last_signature_hash_"||$public_key_hash;
+		}",
+		messages: {
+            cases: [
+                {   // Storing
+                    if: "{ $message == "store" }",
+                    init: "{ 
+                        if (!is_valid_sig("store", $public_key, $signature)) 
+                            bounce ("Wrong signature, the fund cannot be safely store because the signature entered is note recognized as a sign message containing the word 'store' please check the documation!");
+                    }",
+                    messages: [
+                        {
+                            app: "state", state: "{
+                                if (!!trigger.data.private)
+                                    if (!var[$drawer_asset_key]) // if the drawer doesnt exist yet
+                                        var[$drawer_owner_key] = trigger.address;
+                                var[$drawer_amount_key] += $received_amount; 
+                                var[$drawer_asset_key] = $asset; 
+                                response['message'] = "Safely stored ^^";
+                            }"
+                        }
+                    ]
+                },
+                {   // other messages, normally withdraw address
+                    if: "{ !!$message }",
+                    init: "{ 
+                        // Checking if withdraw address is valid
+                            if (!is_valid_address($message))
+                                bounce ("Invalid address or keyword ('store') in 'message'!");
+
+                        // Check if drawer exist
+                            if (!var[$drawer_asset_key])
+                                bounce ("public_key doesn\'t exists with this asset!");
+
+                        // Checking for authorisation
+                            if (!!var[$drawer_owner_key]) // if owner define then drawer is private
+                                if (var[$drawer_owner_key] != trigger.address) // if user is not owner then bounce
+                                    bounce ("You are not the owner of this private drawer!");
+
+                        // Check for replay of signature
+                            if (!!var[$last_signature_key])
+                                if (var[$last_signature_key] == $signature_hash) 
+                                    bounce ("Cannot use 2 times the same signature in a row!");
+
+                        // Check if signature is valid
+                            $withdraw_address = $message;
+                            if (!is_valid_sig($withdraw_address, $public_key, $signature))  
+                                bounce ("The 'withdraw address' signed is not the same as the one that was asked to use ! or this signature was not created with private key linked to "||$public_key||" !");
+
+                        // prepare withdraw amount
+                            $balance_before_withdraw = var[$drawer_amount_key];
+                            $withdraw_amount = trigger.data.withdraw_amount otherwise $balance_before_withdraw;
+                    }",
+                    messages: [
+                        {   // process the withdraw
+                            app: "payment", 
+                            payload: {
+                                asset: "{$asset}", outputs: [
+                                    { address: "{ $withdraw_address }", amount: "{ $withdraw_amount }" }
+                                ]
+                            }
+                        },
+                        {
+                            app: "state",
+                            state: "{
+                                $balance_after_withdraw = $balance_before_withdraw - $withdraw_amount;
+                                
+                                if ($balance_after_withdraw == 0) // drawer empty >> cleaning af AA state
+                                {
+                                    var[$drawer_amount_key] = false;   
+                                    var[$drawer_asset_key] = false;   
+                                    var[$drawer_owner] = false;
+                                    response['message'] = "Successful withdraw, the drawer is now empty ^^";
+                                }
+                                else // update drawer balance and store last signature used for replay protection
+                                {
+                                    var[$drawer_amount_key] = $balance_after_withdraw; // update drawer balance
+                                    var[$last_signature_key] = $signature_hash; // update last signature for replay protection
+                                    response['message'] = "successful withdraw ^^";
+                                }      
+                            }"
+                        }
+                    ]
+                },
+                {   // default case, bounce the instructions
+                    messages: [
+                        {
+                            app: "state", state: "{ bounce ($INSTRUCTIONS); }"
+                        }
+                    ]
+                }
+            ]
+		}
+	}
